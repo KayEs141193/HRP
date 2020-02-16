@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import pdist
 
@@ -11,6 +12,9 @@ class gHRP:
     
     def _tcluster(self,data):
         '''
+        Perform hierarchical clustering on stocks by first creating a distance mmatrix based on the
+        correlation matrix
+        
         Parameters
             data: NxT ndarray with N stocks and T returns
         Returns:
@@ -23,10 +27,54 @@ class gHRP:
         
         return link
         
+    def _getQuasiDiag(self,link):
+        '''
+        Reorders the covariance matrix to place similar stocks closer together and dissimilar stocks
+        far apart.
+        
+        Parameters:
+            link: Link matrix produced by hierarchical clustering
+        Returns
+            order: ndarray containing ordering of the stocks based on the hierarchical clustering
+        '''
+        
+        link = link.astype(int)
+        sortIx = pd.Series([link[-1,0],link[-1,1]])
+        numItems = link[-1,3]
+        
+        while sortIx.max() >= numItems: 
+            # Run as long as clusters is unresolved exist in sortIx
+            
+            sortIx.index = range(0,sortIx.shape[0]*2,2) # re-indexing to ensure cluster items fall next to each other
+            df0 = sortIx[ sortIx >= numItems ] # Get clusters
+            
+            # Each entry in the link matrix is a cluster, therefore we reset from 0 to index the correct cluster
+            i, j = df0.index, df0.values-numItems
+            sortIx[i] = link[j,0] # Replacing clusters with their item1
+            
+            df0 = pd.Series(link[j,1], index=i+1) # index item2 properly to ensure cluster elements fall close together
+            
+            sortIx = sortIx.append(df0) # Append item2
+            sortIx = sortIx.sort_index() # re-sort
+            sortIx.index = range(sortIx.shape[0]) # re-index
+        
+        return sortIx.to_numpy()
 
+    
 if __name__ == '__main__':
     
     print('**** Running Tests for Models: ****')
     
+    hrp = gHRP()
+    
+    T1 = np.array([[1,2,3,4,5,6],[6,5,4,3,2,1],[4,1,4,3,4,-4],[1,2,1,2,1,2]])
+    R1 = np.array([[1.        , 2.        , 0.69821736, 2.        ],
+                   [0.        , 3.        , 0.86454545, 2.        ],
+                   [4.        , 5.        , 1.28509114, 4.        ]])
+    V1 = hrp._tcluster(T1)
+    #assert( hrp._tcluster(T1) == R1 )
+    
+    V2 = hrp._getQuasiDiag(V1)
+
     
     
