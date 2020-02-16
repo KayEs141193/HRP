@@ -59,8 +59,72 @@ class gHRP:
             sortIx.index = range(sortIx.shape[0]) # re-index
         
         return sortIx.to_numpy()
-
     
+    
+    def _getClusterVar(self,cov,items):
+        V = cov[items,:][:,items]
+        dinv = (np.eye(len(items))*(1/V))[range(len(items)),range(len(items))]
+        
+        w = dinv/dinv.sum()
+        
+        return w.dot( V.dot(w) )
+    
+    def _getRecBipart(self,cov,sortIx):
+        '''
+        Perform weight allocation given covariance matrix and ordered stocks
+        
+        Parameters:
+            cov: covariance matrix
+            sortIx: ordered stocks
+        Returns:
+            w: pandas Series weight allocation per stock, #stock given in the index
+            
+        '''
+        
+        w = pd.Series(1,index=sortIx) # Initialize the weights to 1
+        cItems = [sortIx] # initialize all items in one cluster
+        
+        while len(cItems) > 0:
+
+            cItems = [ i[j:k] for i in cItems for j,k in ((0,int(len(i)/2)),(int(len(i)/2),len(i))) if len(i) > 1 ] # bi-section
+            # Note: single items are removed, this reduces the size of citems eventually
+            
+            for i in range(0,len(cItems),2):
+                
+                cItems0 = cItems[i] # cluster 1
+                cItems1 = cItems[i+1] # cluster 2
+                
+                cVar0 = self._getClusterVar(cov,cItems0)
+                cVar1 = self._getClusterVar(cov,cItems1)
+                
+                alpha = 1 - cVar0/(cVar0+cVar1)
+                
+                w[cItems0] *= alpha
+                w[cItems1] *= 1-alpha
+                
+        return w
+    
+    def allocate(self,data):
+        '''
+        Perform HRP-based weight allocation
+        
+        Parameters
+            data: NxT ndarray with N stocks and T returns
+        Returns:
+            w: pandas Series weight allocation per stock, #stock given in the index
+        '''
+        
+        link = self._tcluster(data)
+        
+        # Covariance calculated here is different from self.correlate. POTENTIAL INCONSISTENCY
+        cov = np.cov(data)
+        
+        sortIx = self._getQuasiDiag(link)
+        w = self._getRecBipart(cov,sortIx)
+        
+        return w
+        
+        
 if __name__ == '__main__':
     
     print('**** Running Tests for Models: ****')
@@ -75,6 +139,8 @@ if __name__ == '__main__':
     #assert( hrp._tcluster(T1) == R1 )
     
     V2 = hrp._getQuasiDiag(V1)
+    
+    print(hrp.allocate(T1))
 
     
     
