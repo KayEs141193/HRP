@@ -4,7 +4,7 @@
 import numpy as np
 import pandas as pd
 import random
-from scipy.stats import norm
+from scipy.stats import norm, t
 
 class gData():
         
@@ -39,7 +39,7 @@ class gData():
 class CorrelationGenerator:
     
     '''
-    Generates synthetic covariance matrices.
+    Generates synthetic correlation matrices.
     '''
     
     @classmethod
@@ -164,3 +164,50 @@ class CorrelationGenerator:
                 raise Exception('Unable to find covariance matrix with negative correlation = {}'.format(negrho))
         
         return res
+
+class GaussianGenerator:
+    '''
+    Generates random variables with gaussian copula and gaussian marginals
+    '''
+    
+    def __init__(self,var,mean,corr, *args, **kwargs):
+        
+        cov = None;
+        
+        if corr == 'Diagnol':
+            cov = CorrelationGenerator.generateDiagnol(*args,**kwargs)
+        elif corr == 'Random':
+            cov = CorrelationGenerator.generateRandom(*args,**kwargs)
+        elif corr == 'Correlated':
+            cov = CorrelationGenerator.generateCorrelated(*args,**kwargs)
+        elif corr == 'CorrelatedGroups':
+            cov = CorrelationGenerator.generateCorrelatedGroups(*args,**kwargs)
+        elif corr == 'CorrelatedGroupsNeg':
+            cov = CorrelationGenerator.generateCorrelatedGroupsNeg(*args,**kwargs)
+        else:
+            raise Exception('Unknown Covariance Generator')
+        
+        self.var = var
+        self.cov = cov*np.sqrt(var.reshape(-1,1))*np.sqrt(var.reshape(1,-1))
+        self.mean = mean
+    
+    def generate(self,n=100):
+        
+        return np.random.multivariate_normal(self.mean,self.cov,size=n).T
+
+class TGenerator(GaussianGenerator):
+    '''
+    Generates random variables with gaussian copula and standard_t marginals
+    '''
+    
+    def __init__(self,df,var,mean,corr,*args,**kwargs):
+        super(TGenerator,self).__init__(var,mean,corr,*args,**kwargs)
+        
+        self.df = df
+        
+    def generate(self,n=100):
+        
+        uni = norm.cdf(super(TGenerator,self).generate(n))
+        
+        return (t.ppf(uni,self.df.reshape(-1,1)) + self.mean.reshape(-1,1))*np.sqrt(self.var.reshape(-1,1))
+        
