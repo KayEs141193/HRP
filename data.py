@@ -4,6 +4,7 @@
 import numpy as np
 import pandas as pd
 import random
+from scipy.stats import norm
 
 class gData():
         
@@ -33,4 +34,133 @@ class gData():
         x[point,cols[-1]]=np.array([-.5,2])
          
         return x,cols
+
+
+class CorrelationGenerator:
     
+    '''
+    Generates synthetic covariance matrices.
+    '''
+    
+    @classmethod
+    def generateDiagnol(cls,n):
+        '''
+        Generates a correlation matrix with zero correlation
+        
+        Parameter:
+            n: Size of correlation matrix
+        Returns:
+            res: correlation matrix
+        '''
+        
+        return np.eye(n)
+    
+    @classmethod
+    def generateRandom(cls,n):
+        '''
+        Generates a correlation matrix with random correlations
+        
+        Parameter:
+            n: Size of correlation matrix
+        Returns:
+            res: correlation matrix
+        '''
+        A = np.random.normal(size=(n,n))
+        res = A.T.dot(A)
+        var = res[np.arange(n),np.arange(n)]
+        return (res/np.sqrt(var.reshape(1,n)))/np.sqrt(var.reshape(n,1))
+
+    @classmethod
+    def isPosDef(cls, x):
+        '''
+        Checks if given correlation is positive-semi definite or not
+        
+        Parameters:
+            x: 2-D ndarray
+        Returns:
+            bool: is x is positive-semi definite or not
+        '''
+        return np.all(np.linalg.eigvals(x) > 0)
+
+    @classmethod
+    def generateCorrelated(cls, n, rholim):
+        '''
+        Generate a correlation matrix where elements are correlated with correlations limited by rholims
+        
+        Parameters:
+            n: size of covariance matrix
+            rholim: tuple giving limits of correlated b/w elements
+        Returns:
+            res: 2-d ndarray, covariance matrix
+        '''
+        
+        res = np.zeros(shape=(n,n))
+        
+        it = 0
+        while not cls.isPosDef(res):
+            print('Iteration: {}'.format(it))
+            it += 1
+            res = np.random.uniform(rholim[0],rholim[1],size=(n,n))
+            res[np.arange(n),np.arange(n)] = 1
+        
+        return res
+
+    @classmethod
+    def generateCorrelatedGroups(cls, ns, rholims ):
+        '''
+        Generate a correlation matrix with certain groups having certain kind of correlations
+        
+        Parameters:
+            ns: ndarray containing size of each correlated group
+            rholims: list of tuples, each tuple gives limits of correlated b/w elements
+        Returns:
+            res: 2-d ndarray, covariance matrix
+        '''
+        
+        n = ns.sum()
+        ncum = ns.cumsum()
+        res = np.zeros(shape=(n,n))
+        
+        print('Generate Group {}'.format(0))
+        res[:ncum[0],:ncum[0]] = cls.generateCorrelated(ns[0],rholims[0])
+        
+        for i in range(1,len(ns)):
+            print('Generate Group {}'.format(i))
+            res[ ncum[i-1]:ncum[i], ncum[i-1]:ncum[i] ] = cls.generateCorrelated(ns[i],rholims[i])
+        
+        return res
+
+    @classmethod
+    def generateCorrelatedGroupsNeg(cls, ns, rholims, negrho, limit = 1000 ):
+        '''
+        Generate a correlation matrix with certain groups having certain kind of correlations
+        
+        Parameters:
+            ns: ndarray containing size of each correlated group
+            rholims: list of tuples, each tuple gives limits of correlated b/w elements
+            negrho: negative correlation between elements of different groups
+            limit: no.of iterations to try
+        Returns:
+            res: 2-d ndarray, covariance matrix
+        '''
+        
+        n = ns.sum()
+        ncum = ns.cumsum()
+        res = np.zeros(shape=(n,n))
+        
+        it = 0
+        while not cls.isPosDef(res):
+            print('Iteration: {}'.format(it))
+            it += 1
+            print('Generate Group {}'.format(0))
+            res[:,:] = negrho
+            res[:ncum[0],:ncum[0]] = cls.generateCorrelated(ns[0],rholims[0])
+            
+            for i in range(1,len(ns)):
+                print('Generate Group {}'.format(i))
+                res[ ncum[i-1]:ncum[i], ncum[i-1]:ncum[i] ] = cls.generateCorrelated(ns[i],rholims[i])
+            
+            if it > limit:
+                raise Exception('Unable to find covariance matrix with negative correlation = {}'.format(negrho))
+        
+        return res
