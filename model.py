@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import pdist
+from simulation import *
 
 class gHRP:
     
@@ -140,7 +141,9 @@ if __name__ == '__main__':
     
     V2 = hrp._getQuasiDiag(V1)
     
-    print(hrp.allocate(T1))
+    #print(hrp.allocate(T1))
+
+
 
     
     
