@@ -3,6 +3,8 @@ import pandas as pd
 from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import pdist
 from simulation import *
+from pypfopt.efficient_frontier import EfficientFrontier
+
 
 class gHRP:
     
@@ -124,7 +126,58 @@ class gHRP:
         w = self._getRecBipart(cov,sortIx)
         
         return w
+
+class gIVP:
+    
+    def __init__(self,cov = np.cov):
+        self.cov = cov
+
+
+    def allocate(self,data):
+        '''
+        Allocates a weight in inverse proportion to the subset’s variance.
         
+        Parameters:
+            data: NxT ndarray with N stocks and T returns
+            
+        Returns:
+            w: pandas Series weight allocation per stock, #stock given in the index
+
+        '''
+        _cov = self.cov(data)
+        _ivp = 1./np.diag(_cov)
+        _ivp /= _ivp.sum()
+
+        
+        return pd.Series(_ivp)
+    
+    
+class gEFO:
+    
+    def __init__(self,cov = np.cov):
+        self.cov = cov
+        
+    def allocate(self,data):
+        '''
+        Compute CLA's minimum variance portfolio
+        
+        Parameters:
+            data: NxT ndarray with N stocks and T returns
+            
+        Returns:
+            w: pandas Series weight allocation per stock, #stock given in the index
+        '''
+        
+        _cov = (self.cov(data))
+        _mu=np.mean(data,axis = 1)
+        
+        # Optimise for maximal Sharpe ratio
+        ef = EfficientFrontier(_mu, _cov)
+        w = ef.max_sharpe()
+
+        return pd.Series(w)
+            
+ 
         
 if __name__ == '__main__':
     
