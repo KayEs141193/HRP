@@ -29,6 +29,7 @@ def simulate(data,model_list,name,iterations=100000,test_split=5,step=2,mode='tr
             
             for i,model in enumerate(model_list):
                 dailyRet = []
+                weights = []
 
                 # Computing average initial weights for the model
                 initWeights[name[i]] += model.allocate(inSample.T).values
@@ -41,12 +42,13 @@ def simulate(data,model_list,name,iterations=100000,test_split=5,step=2,mode='tr
                         w = initWeights[name[i]]
 
                     dailyRet.extend(np.dot(w,outSample[period:period+step].T))
+                    weights.append(w)
                 
                 cumRet[name[i]] = np.mean(np.array(dailyRet))
                 cumVol[name[i]] = np.var(np.array(dailyRet))
 
         allocations = pd.DataFrame(initWeights)/iterations
-        return allocations,cumRet,cumVol
+        return allocations,cumRet,cumVol,np.array(weights)
         
     if mode == 'test':
         pass
