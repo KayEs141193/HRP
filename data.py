@@ -210,4 +210,21 @@ class TGenerator(GaussianGenerator):
         uni = norm.cdf(super(TGenerator,self).generate(n))
         
         return (t.ppf(uni,self.df.reshape(-1,1)) + self.mean.reshape(-1,1))*np.sqrt(self.var.reshape(-1,1))
+
+class DynamicGenerator:
+    '''
+    Generates time series by changing the underlying process after a predefined no.of steps
+    '''
+    
+    def __init__(self,steps,generators):
         
+        self.steps = steps.cumsum()
+        self.generators = generators
+        self.cur = 0
+        
+    def generate(self, n=100):
+        
+        idx = np.minimum(np.searchsorted(self.steps,np.array([self.cur]),'right')[0],len(self.generators)-1)
+        self.cur += 1
+        
+        return self.generators[idx].generate(n)
