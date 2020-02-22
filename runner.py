@@ -1,3 +1,7 @@
+import simulation
+from data import LopezGenerator
+from model import gHRP
+
 '''
     Adding different scenarios to run
     
@@ -41,3 +45,20 @@ def generate_downturn_scenarios(n,t1,t2,t3):
         t3: final period of normal return
     '''
     pass
+
+    
+def run__lopez_replication():
+    params = {  'nObs': 520,
+                'sLength':260,
+                'size0':5,
+                'size1':5,
+                'mu0':0,
+                'sigma0':.01,
+                'sigma1F':0.25}
+    
+    n_iter = 10
+    
+    m = gHRP()
+    datagen = LopezGenerator(params['sLength'],params['size0'],params['size1'],params['mu0'],params['sigma0'],params['sigma1F'])
+    res = simulation.simulateAll(datagen,[m],22*12,260,22,n_iter)
+    return res

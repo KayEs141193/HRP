@@ -1,11 +1,46 @@
-import model,data
 import pandas as pd
 import numpy as np
 
 def data_gen():
     np.random.randn(5,10)
 
-def simulate(data,model_list,name,iterations=100000,test_split=5,step=2,mode='train'):
+def simulateOnce(dataGen,models,tPeriod,initPeriod,rparam):
+    
+    assetData = dataGen.generate(tPeriod+initPeriod)
+    
+    nassets = assetData.shape[0]
+    nrebalances = int(tPeriod/rparam)
+    
+    weights = np.zeros(shape=(len(models),nassets,nrebalances+1))
+    dailyrets = np.zeros(shape=(len(models),tPeriod))
+    
+    for i, mm in enumerate(models):
+        
+        weights[i,:,0] = mm.allocate(assetData[:,:initPeriod])
+        weights[i,:,1:] = np.array([ mm.allocate(assetData[:,(initPeriod+j*rparam):(initPeriod+rparam*(j+1))]) for j in range(nrebalances) ]).T
+        
+        ww = np.zeros(shape=assetData[:,initPeriod:].shape)
+        
+        for j in range(nrebalances):
+            ww[:,j*rparam:(j+1)*rparam] = weights[i,:,j].reshape(-1,1)
+            
+        
+        dailyrets[i,:] = (ww*assetData[:,initPeriod:]).sum(axis=0)
+    
+    return weights, dailyrets
+        
+
+def simulateAll(dataGen,models,tPeriod,initPeriod,rparam,iterations=10):
+    
+    data = []
+    
+    for _ in range(iterations):
+        data.append( simulateOnce(dataGen,models,tPeriod,initPeriod,rparam) )
+    
+    return data
+    
+
+def simulateOld(data,model_list,name,iterations=100000,test_split=5,step=2,mode='train'):
     '''
         Produces analytics and test samples for models based on the passed data
         
@@ -23,9 +58,9 @@ def simulate(data,model_list,name,iterations=100000,test_split=5,step=2,mode='tr
         cumRet = {name[i]:0 for i in range(len(model_list))}
         cumVol = {name[i]:0 for i in range(len(model_list))}
         for iters in range(iterations):
-            train_data = data.generate()#pd.DataFrame(np.random.randn(10,5))
-            inSample = train_data[:test_split]#train_data.iloc[:test_split]
-            outSample = train_data[test_split:]#train_data.iloc[test_split:]
+            train_data = data.generate() #pd.DataFrame(np.random.randn(10,5))
+            inSample = train_data[:test_split] #train_data.iloc[:test_split]
+            outSample = train_data[test_split:] #train_data.iloc[test_split:]
             
             for i,model in enumerate(model_list):
                 dailyRet = []

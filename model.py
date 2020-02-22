@@ -142,7 +142,7 @@ class gHRP:
         link = self._tcluster(data)
         
         # Covariance calculated here is different from self.correlate. POTENTIAL INCONSISTENCY
-        cov = np.cov(data)
+        cov = self.corr.cov(data)
         
         sortIx = self._getQuasiDiag(link)
         w = self._getRecBipart(cov,sortIx)
@@ -216,7 +216,7 @@ if __name__ == '__main__':
     
     V2 = hrp._getQuasiDiag(V1)
     
-    #print(hrp.allocate(T1))
+    print(hrp.allocate(T1))
 
 
 
