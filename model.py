@@ -2,9 +2,30 @@ import numpy as np
 import pandas as pd
 from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import pdist
-from simulation import *
 from pypfopt.efficient_frontier import EfficientFrontier
 
+class Correlators:
+    '''
+    Base correlator class
+    '''
+    def corr(self, data):
+        covmat = self.cov(data)
+        std  = np.sqrt(covmat[np.arange(covmat.shape[0]),np.arange(covmat.shape[0])])
+        return (covmat/std.reshape(-1,1))/std.reshape(1,-1)
+    
+class PearsonCorrelator(Correlators):
+    '''
+    Pearson Correlator
+    '''
+    def __init__(self,decay=0):
+        self.decay = decay
+    
+    def cov(self, data):
+        data = data.T
+        aweights = np.arange(data.shape[0])
+        aweights = np.exp(-self.decay*aweights)
+        cov_mat = np.cov(data.T,aweights=aweights)
+        return cov_mat
 
 class gHRP:
     
