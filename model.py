@@ -29,7 +29,7 @@ class PearsonCorrelator(Correlators):
 
 class gHRP:
     
-    def __init__(self,correlator = np.corrcoef, dmetric = 'euclidean', linkage_type = 'single'):
+    def __init__(self,correlator = PearsonCorrelator(), dmetric = 'euclidean', linkage_type = 'single'):
         self.corr = correlator
         self.dmetric = dmetric
         self.linkage_type = linkage_type
@@ -44,9 +44,10 @@ class gHRP:
         Returns:
             link: linkage ndarray. See linkage function in sciypy for details
         '''
-        corr = self.corr(data)
-        dmat = np.sqrt(0.5*(1-corr))
         
+        epsilon = 0.000000001
+        corr = self.corr.corr(data)
+        dmat = np.sqrt(0.5*(1+epsilon-corr))
         link = linkage(pdist(dmat,metric=self.dmetric),method=self.linkage_type)
         
         return link
