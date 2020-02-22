@@ -83,7 +83,7 @@ def simulateOld(data,model_list,name,iterations=100000,test_split=5,step=2,mode=
                 cumVol[name[i]] = np.var(np.array(dailyRet))
 
         allocations = pd.DataFrame(initWeights)/iterations
-        return allocations,cumRet,cumVol,np.array(weights)
+        return allocations,cumRet,cumVol,np.array(weights),np.array(dailyRet)
         
     if mode == 'test':
         pass
