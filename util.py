@@ -10,6 +10,31 @@ class metrics():
     
     def __init__(self):
         self.rf = 0
+     
+        
+    def sharpe_ratio(self,data,weights):
+        
+        '''
+        Paramters:
+            data: Takes T x N np array of returns of N assets across T timeperiods
+            weights: Takes T x N np array of weights of N assets across T timeperiods
+            
+        Returns:
+            Sharpe ratio for portfolio returns for the time period
+        '''
+       
+        
+        assert weights.shape == data.shape, "Check input vector shapes"
+        
+        returns = np.sum(weights*data,axis = 1)
+        
+        assert returns.shape[0] == weights.shape[0]
+        
+        SR = (np.mean(returns) - self.rf)/np.std(returns)
+        
+        return SR
+        
+        
         
     def adj_sharpe_ratio(self,data,weights):
         
