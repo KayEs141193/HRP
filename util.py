@@ -3,7 +3,9 @@
 
 import pandas as pd
 import numpy as np
-from scipy.stats import kurtosis, skew
+from scipy.stats import kurtosis, skew, binned_statistic
+
+import matplotlib.pyplot as plt
 
 
 class metrics():
@@ -120,25 +122,46 @@ class metrics():
         return np.mean(np.sum(weights**2,axis = 1))
   
 
-if __name__ == '__main__': 
+class plotUtil():
     
-    # Sample tests
-
-    wts = np.array([[0.1,0.2,0.3,0.4],[0.2,0.1,0.3,0.4],[0.4,0.1,0.2,0.3]])
-    data = np.array([[0.1,0.1,0.1,0.1],[0.2,0.2,0.2,0.2],[0.2,0.3,0.4,0.2]])
-
+    def plot_wts_timeseries(self,res):
+        
+        '''
+        Paramters: Takes a list of tuples for each iteration. Each tuple rebalancing weights,
+        and daily returns.
+        Weights: M x N x T np array - M is models, N is assets , T timeperiods
+        Daily rets: M x T np array - M is models, T is timeperiods
+        
+        
+        Plots a timeseries of weights across 'all' assets for all rebalancing periods
+        
+        '''
+        
+        assert len(res) > 0 , "Run experiment first!!"
+        
+        wts, dailyrets = res[0]
+        
+        wts_sum = np.zeros(wts.shape)
+        dailyrets_sum = np.zeros(dailyrets.shape)
+        
+        for i in range(len(res)):
+            wts, dailyrets = res[i]
+            wts_sum += wts
+            dailyrets_sum += dailyrets
+            
+        #Caclulate average across all simulations
+        avg_wts = wts_sum/len(res)
+        
+        #For all models, plot graphs
+        for m in range((wts.shape[0])):
+            plt.figure()
+            df = pd.DataFrame(avg_wts[m].T)
+            df.plot.line()
+            
+            model_name = 'Model ' + str(m)
+            plt.title(model_name)
+            plt.xlabel('Rebalancing period')
+            plt.ylabel('Asset weights')
+            plt.show()
     
-    print(metrics().adj_sharpe_ratio(data,wts))
-
-    print(metrics().cert_equivalent_ret(data,wts))
-
-    print(metrics().avg_turnover(wts))
-
-    print(metrics().sum_sq_port_wts(wts))
-        
-        
-        
-        
-        
-        
-        
+    
