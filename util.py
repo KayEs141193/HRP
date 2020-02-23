@@ -14,7 +14,31 @@ class metrics():
     def __init__(self):
         self.rf = 0
      
+    
+    def calc_rets(self,data):
         
+        '''
+        Paramters:
+            data: Takes T x N np array of returns of N assets across T timeperiods
+            
+        Returns:
+            Sharpe ratio for portfolio returns for the time period
+        '''
+        
+        ret_data = 1 + data
+        
+        tot_ret = np.prod(ret_data,axis = 0) - 1
+        
+        tot_log_ret = np.sum(data,axis = 0)
+        
+        avg_daily_ret = np.mean(data,axis = 0)
+        
+        avg_log_ret = np.mean(data,axis = 0)
+        
+        return tot_ret, tot_log_ret, avg_daily_ret, avg_log_ret
+    
+
+    
     def sharpe_ratio(self,data,weights):
         
         '''
@@ -38,7 +62,7 @@ class metrics():
         return SR
         
         
-        
+    
     def adj_sharpe_ratio(self,data,weights):
         
         '''
@@ -62,6 +86,7 @@ class metrics():
         ASR = SR*(1 + (skew(returns)/6)*SR - ((kurtosis(returns) - 3)/24)*SR**2)
         
         return ASR
+    
     
     def cert_equivalent_ret(self,data,weights,gamma = 1):
         
@@ -169,6 +194,7 @@ class plotUtil():
             plt.ylim(0.0,1.0)
             plt.show()
     
+    
     @classmethod
     def gen_summary_statistics(self,res,names,return_df = False):
     
@@ -190,29 +216,75 @@ class plotUtil():
         M,N,T = wts.shape
         n_sims = len(res)
                 
-        stats = {model : [] for model in names }
+        stats_means = {model : [] for model in names }
+        stats_se = {model : [] for model in names }
         
         for m in range(M):
             iter_turnover = []
             iter_sspw = []
+            iter_tot_ret = []
+            iter_tot_log_ret = []
+            iter_avg_daily_ret = []
+            iter_avg_daily_log_ret = []
+            
+            
             for i in range(n_sims):
-                wts, dailyrets = res[i]
                 
+                wts, dailyrets = res[i]
                 iter_turnover.append(metrics().avg_turnover(wts[m,:,:].T))
                 iter_sspw.append(metrics().sum_sq_port_wts(wts[m,:,:].T))
+                
+                tot_ret, tot_log_ret, avg_daily_ret, avg_log_ret = metrics().calc_rets(dailyrets[m].T)
+                
+                iter_tot_ret.append(tot_ret)
+                iter_tot_log_ret.append(tot_log_ret)
+                iter_avg_daily_ret.append(avg_daily_ret)
+                iter_avg_daily_log_ret.append(avg_log_ret)
+                
+            
+            stats_means[names[m]] += [np.mean(iter_turnover),
+                 np.mean(iter_sspw),
+                 np.mean(iter_tot_ret), 
+                 np.mean(iter_tot_log_ret),
+                 np.mean(iter_avg_daily_ret),
+                 np.mean(iter_avg_daily_log_ret)
+                 ]
+            
+            stats_se[names[m]] += [np.std(iter_turnover)/n_sims**0.5,
+                 np.std(iter_sspw)/n_sims**0.5,
+                 np.std(iter_tot_ret)/n_sims**0.5,
+                 np.std(iter_tot_log_ret)/n_sims**0.5,
+                 np.std(iter_avg_daily_ret)/n_sims**0.5,
+                 np.std(iter_avg_daily_log_ret)/n_sims**0.5
+                 ]
             
             
-            stats[names[m]] += [np.mean(iter_turnover),np.std(iter_turnover)/n_sims**0.5,
-                 np.mean(iter_sspw),np.std(iter_sspw)/n_sims**0.5]
             
-            
-        col_names = ['Avg Turnover', 'Avg Turnover (se)','Avg SSPW','Avg SSPW (se)']
+        col_names_means = ['Avg Turnover', 'Avg SSPW',
+                     'Avg Total Return',
+                     'Avg Total Log Return',
+                     'Avg Daily Return',
+                     'Avg Daily Log Return'
+                     ]
         
-        df = pd.DataFrame.from_dict(stats,orient = 'index',columns = col_names)
-        df.index.name = 'Model'
+        col_names_se = ['Avg Turnover (se)','Avg SSPW (se)',
+                        'Avg Total Return (se)',
+                        'Avg Total Log Return (se)',
+                        'Avg Daily Return (se)',
+                        'Avg Daily Log Return (se)'
+                     ]
         
-        print(tabulate(df,headers='keys', tablefmt='psql'))
+        df_means = pd.DataFrame.from_dict(stats_means,orient = 'index',columns = col_names_means)
+        df_means.index.name = 'Model'
+        
+        df_se = pd.DataFrame.from_dict(stats_se,orient = 'index',columns = col_names_se)
+        df_se.index.name = 'Model'
+        
+        print(tabulate(df_means,headers='keys', tablefmt='psql'))
+        print(tabulate(df_se,headers='keys', tablefmt='psql'))
         
         if return_df:
-            return df
+            return df_means,df_se
+    
+
     
