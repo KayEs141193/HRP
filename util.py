@@ -124,17 +124,20 @@ class metrics():
 
 class plotUtil():
     
-    def plot_wts_timeseries(self,res):
+    @classmethod
+    def plot_wts_timeseries(self,res,names):
         
         '''
-        Paramters: Takes a list of tuples for each iteration. Each tuple rebalancing weights,
+        Paramters: 
+            res: Takes a list of tuples for each iteration. Each tuple rebalancing weights,
         and daily returns.
-        Weights: M x N x T np array - M is models, N is assets , T timeperiods
-        Daily rets: M x T np array - M is models, T is timeperiods
+                - Weights: M x N x T np array - M is models, N is assets , T timeperiods
+                - Daily rets: M x T np array - M is models, T is timeperiods
+        
+            names: List of strings with model names (in order)
         
         
         Plots a timeseries of weights across 'all' assets for all rebalancing periods
-        
         '''
         
         assert len(res) > 0 , "Run experiment first!!"
@@ -158,10 +161,12 @@ class plotUtil():
             df = pd.DataFrame(avg_wts[m].T)
             df.plot.line()
             
-            model_name = 'Model ' + str(m)
+            model_name = 'Model - ' + names[m]
             plt.title(model_name)
             plt.xlabel('Rebalancing period')
             plt.ylabel('Asset weights')
             plt.show()
+    
+    
     
     
