@@ -158,7 +158,7 @@ class plotUtil():
         
         #For all models, plot graphs
         for m in range((wts.shape[0])):
-            plt.figure()
+            plt.figure(figsize = (16,10))
             df = pd.DataFrame(avg_wts[m].T)
             df.plot.line()
             
