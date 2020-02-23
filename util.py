@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 from scipy.stats import kurtosis, skew, binned_statistic
+from tabulate import tabulate
 
 import matplotlib.pyplot as plt
 
@@ -124,17 +125,20 @@ class metrics():
 
 class plotUtil():
     
-    def plot_wts_timeseries(self,res):
+    @classmethod
+    def plot_wts_timeseries(self,res,names):
         
         '''
-        Paramters: Takes a list of tuples for each iteration. Each tuple rebalancing weights,
+        Paramters: 
+            res: Takes a list of tuples for each iteration. Each tuple rebalancing weights,
         and daily returns.
-        Weights: M x N x T np array - M is models, N is assets , T timeperiods
-        Daily rets: M x T np array - M is models, T is timeperiods
+                - Weights: M x N x T np array - M is models, N is assets , T timeperiods
+                - Daily rets: M x T np array - M is models, T is timeperiods
+        
+            names: List of strings with model names (in order)
         
         
         Plots a timeseries of weights across 'all' assets for all rebalancing periods
-        
         '''
         
         assert len(res) > 0 , "Run experiment first!!"
@@ -154,14 +158,61 @@ class plotUtil():
         
         #For all models, plot graphs
         for m in range((wts.shape[0])):
-            plt.figure()
+            plt.figure(figsize = (16,10))
             df = pd.DataFrame(avg_wts[m].T)
             df.plot.line()
             
-            model_name = 'Model ' + str(m)
+            model_name = 'Model - ' + names[m]
             plt.title(model_name)
             plt.xlabel('Rebalancing period')
             plt.ylabel('Asset weights')
+            plt.ylim(0.0,1.0)
             plt.show()
     
+    @classmethod
+    def gen_summary_statistics(self,res,names,return_df = False):
+    
+        '''
+        Paramters: Takes a list of tuples for each iteration. Each tuple rebalancing weights,
+        and daily returns.
+        Weights: M x N x T np array - M is models, N is assets , T timeperiods
+        Daily rets: M x T np array - M is models, T is timeperiods
+        
+            
+        Creates a table of summary stats
+        
+        '''
+        
+        assert len(res) > 0 , "Run experiment first!!"
+            
+        wts, dailyrets = res[0]
+            
+        M,N,T = wts.shape
+        n_sims = len(res)
+                
+        stats = {model : [] for model in names }
+        
+        for m in range(M):
+            iter_turnover = []
+            iter_sspw = []
+            for i in range(n_sims):
+                wts, dailyrets = res[i]
+                
+                iter_turnover.append(metrics().avg_turnover(wts[m,:,:].T))
+                iter_sspw.append(metrics().sum_sq_port_wts(wts[m,:,:].T))
+            
+            
+            stats[names[m]] += [np.mean(iter_turnover),np.std(iter_turnover)/n_sims**0.5,
+                 np.mean(iter_sspw),np.std(iter_sspw)/n_sims**0.5]
+            
+            
+        col_names = ['Avg Turnover', 'Avg Turnover (se)','Avg SSPW','Avg SSPW (se)']
+        
+        df = pd.DataFrame.from_dict(stats,orient = 'index',columns = col_names)
+        df.index.name = 'Model'
+        
+        print(tabulate(df,headers='keys', tablefmt='psql'))
+        
+        if return_df:
+            return df
     
