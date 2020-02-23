@@ -151,7 +151,7 @@ class gHRP:
 
 class gIVP:
     
-    def __init__(self,cov = np.cov):
+    def __init__(self,cov = PearsonCorrelator()):
         self.cov = cov
 
 
@@ -166,7 +166,7 @@ class gIVP:
             w: pandas Series weight allocation per stock, #stock given in the index
 
         '''
-        _cov = self.cov(data)
+        _cov = self.cov.cov(data)
         _ivp = 1./np.diag(_cov)
         _ivp /= _ivp.sum()
 
@@ -176,7 +176,7 @@ class gIVP:
     
 class gEFO:
     
-    def __init__(self,cov = np.cov):
+    def __init__(self,cov = PearsonCorrelator()):
         self.cov = cov
         
     def allocate(self,data):
@@ -190,7 +190,7 @@ class gEFO:
             w: pandas Series weight allocation per stock, #stock given in the index
         '''
         
-        _cov = (self.cov(data))
+        _cov = (self.cov.cov(data))
         _mu=np.mean(data,axis = 1)
         
         # Optimise for maximal Sharpe ratio
