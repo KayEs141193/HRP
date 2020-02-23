@@ -222,18 +222,26 @@ class DynamicGenerator:
     Generates time series by changing the underlying process after a predefined no.of steps
     '''
     
-    def __init__(self,steps,generators):
+    def __init__(self,steps,generators,nn):
         
         self.steps = steps.cumsum()
         self.generators = generators
-        self.cur = 0
+        self.nn = nn
         
     def generate(self, n=100):
         
-        idx = np.minimum(np.searchsorted(self.steps,np.array([self.cur]),'right')[0],len(self.generators)-1)
-        self.cur += 1
+        res = np.zeros(self.nn,n)
+        res[:,:min(n,self.steps[0])] = self.generators[0].generate(min(n,self.steps[0]))
         
-        return self.generators[idx].generate(n)
+        for i in range(1,len(self.steps)):
+            if n < self.steps[i]:
+                break
+            res[:,self.steps[i-1]:self.steps[i]] = self.generators[i].generate(self.steps[i]-self.steps[i-1])
+        
+        if n > self.steps[-1]:
+            res[:,self.steps[-1]:] = self.generators[-1].generate(n-self.steps[-1])
+        
+        return res
     
     
     

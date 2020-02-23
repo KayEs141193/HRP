@@ -4,9 +4,9 @@ import numpy as np
 def data_gen():
     np.random.randn(5,10)
 
-def simulateOnce(dataGen,models,tPeriod,initPeriod,rparam):
-    
-    assetData = dataGen.generate(tPeriod+initPeriod)
+def simulateOnce(dataGen,models,tPeriod,window,rparam):
+
+    assetData = dataGen.generate(tPeriod+window)
     
     nassets = assetData.shape[0]
     nrebalances = int(tPeriod/rparam)
@@ -16,16 +16,16 @@ def simulateOnce(dataGen,models,tPeriod,initPeriod,rparam):
     
     for i, mm in enumerate(models):
         
-        weights[i,:,0] = mm.allocate(assetData[:,:initPeriod])
-        weights[i,:,1:] = np.array([ mm.allocate(assetData[:,(initPeriod+j*rparam):(initPeriod+rparam*(j+1))]) for j in range(nrebalances) ]).T
+        weights[i,:,0] = mm.allocate(assetData[:,:window])
+        weights[i,:,1:] = np.array([ mm.allocate(assetData[:,(window+rparam*(j+1)-window):(window+rparam*(j+1))]) for j in range(nrebalances) ]).T
         
-        ww = np.zeros(shape=assetData[:,initPeriod:].shape)
+        ww = np.zeros(shape=assetData[:,window:].shape)
         
         for j in range(nrebalances):
             ww[:,j*rparam:(j+1)*rparam] = weights[i,:,j].reshape(-1,1)
             
         
-        dailyrets[i,:] = (ww*assetData[:,initPeriod:]).sum(axis=0)
+        dailyrets[i,:] = (ww*assetData[:,window:]).sum(axis=0)
     
     return weights, dailyrets
         
