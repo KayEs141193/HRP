@@ -252,10 +252,11 @@ class plotUtil():
             
             stats_se[names[m]] += [np.std(iter_turnover)/n_sims**0.5,
                  np.std(iter_sspw)/n_sims**0.5,
-                 np.std(iter_tot_ret)/n_sims**0.5,
-                 np.std(iter_tot_log_ret)/n_sims**0.5,
-                 np.std(iter_avg_daily_ret)/n_sims**0.5,
-                 np.std(iter_avg_daily_log_ret)/n_sims**0.5
+                 
+                 np.var(iter_tot_ret,ddof=1),
+                 np.var(iter_tot_log_ret,ddof=1),
+                 np.var(iter_avg_daily_ret,ddof=1),
+                 np.var(iter_avg_daily_log_ret,ddof=1)
                  ]
             
             
@@ -268,10 +269,10 @@ class plotUtil():
                      ]
         
         col_names_se = ['Avg Turnover (se)','Avg SSPW (se)',
-                        'Avg Total Return (se)',
-                        'Avg Total Log Return (se)',
-                        'Avg Daily Return (se)',
-                        'Avg Daily Log Return (se)'
+                        'Var Total Return',
+                        'Var Total Log Return',
+                        'Var Daily Return',
+                        'Var Daily Log Return'
                      ]
         
         df_means = pd.DataFrame.from_dict(stats_means,orient = 'index',columns = col_names_means)
