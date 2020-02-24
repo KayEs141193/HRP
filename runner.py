@@ -93,8 +93,8 @@ def run_skewedNorm_scenarios(n_iter,sigma,linkage,n,a):
     
     names = [ name+'__iter_'+str(n_iter)+'__linkage_'+linkage for name in ['HRP','IVP','CLA']]
     
-    plotUtil.plot_wts_timeseries(res,names)
-    plotUtil.gen_summary_statistics(res,names)
+    plotUtil.plot_wts_timeseries(res,names,save_output=True)
+    plotUtil.gen_summary_statistics(res,names,save_output=True)
 
 def run_T_scenarios(n_iter,sigma,linkage,n,df):
     '''
