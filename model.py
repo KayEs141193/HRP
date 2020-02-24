@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import pdist
-from pypfopt.efficient_frontier import EfficientFrontier
+from pypfopt.cla import CLA
 
 class Correlators:
     '''
@@ -174,7 +174,7 @@ class gIVP:
         return pd.Series(_ivp)
     
     
-class gEFO:
+class gCLA:
     
     def __init__(self,cov = PearsonCorrelator()):
         self.cov = cov
@@ -193,9 +193,11 @@ class gEFO:
         _cov = (self.cov.cov(data))
         _mu=np.mean(data,axis = 1)
         
+        
+        
         # Optimise for maximal Sharpe ratio
-        ef = EfficientFrontier(_mu, _cov)
-        w = ef.max_sharpe()
+        cl = CLA(pd.Series(_mu), pd.DataFrame(_cov))
+        w = cl.min_volatility()
 
         return pd.Series(w)
             
