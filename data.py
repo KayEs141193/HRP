@@ -230,7 +230,7 @@ class DynamicGenerator:
         
     def generate(self, n=100):
         
-        res = np.zeros(self.nn,n)
+        res = np.zeros(shape=(self.nn,n))
         res[:,:min(n,self.steps[0])] = self.generators[0].generate(min(n,self.steps[0]))
         
         for i in range(1,len(self.steps)):

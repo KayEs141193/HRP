@@ -1,6 +1,8 @@
 import simulation
-from data import LopezGenerator
-from model import gHRP
+from data import LopezGenerator, GaussianGenerator, DynamicGenerator
+from model import gHRP, gIVP, gEFO
+from util import plotUtil
+import numpy as np
 
 '''
     Adding different scenarios to run
@@ -23,7 +25,7 @@ from model import gHRP
 
 def generate_basic_scenarios(n,t,corrp):
     '''
-    Generates basic scenarios with varying linkages.
+    Generates basic scenarios with varying linkages with Lopez generator
     Fixed:
         1. Rebalancing Parameter (l): 22
         2. Exponential weight decay: 0.05
@@ -31,12 +33,12 @@ def generate_basic_scenarios(n,t,corrp):
     '''
     pass
     
-def generate_downturn_scenarios(n,t1,t2,t3):
+def generate_downturn_scenarios():
     '''
     Generates basic scenarios with varying linkages.
     Fixed:
         1. Rebalancing Parameter (l): 22
-        2. Exponential weight decay: 0.
+        2. Window = 260.
         3. Correlator: Basic correlation
         4. Underlying return generating process: Dynamic Generator
     Parameters:
@@ -44,10 +46,23 @@ def generate_downturn_scenarios(n,t1,t2,t3):
         t2: period of downturn
         t3: final period of normal return
     '''
-    pass
-
+    n = 10
+    n_iter = 1
     
-def run__lopez_replication():
+    sigma = np.ones(n)*0.01
+    mean  = np.zeros(n)
+    
+    g1 = GaussianGenerator(sigma,mean,'Diagnol',n)
+    g2 = GaussianGenerator(sigma*10,mean,'Correlated',n,(0.9,1))
+    m = gHRP()
+    m2 = gIVP()
+    m3 = gEFO()
+    datagen = DynamicGenerator(np.array([282,132,146]),[g1,g2,g1],n)
+    res = simulation.simulateAll(datagen,[m,m2,m3],22*14,260,22,n_iter)
+    
+    plotUtil.plot_wts_timeseries(res,['HRP','IVP','EFO'])
+    
+def run_lopez_replication():
     params = {  'nObs': 520,
                 'sLength':260,
                 'size0':5,
@@ -56,9 +71,12 @@ def run__lopez_replication():
                 'sigma0':.01,
                 'sigma1F':0.25}
     
-    n_iter = 10
+    n_iter = 1
     
     m = gHRP()
+    m2 = gIVP()
+    m3 = gEFO()
     datagen = LopezGenerator(params['sLength'],params['size0'],params['size1'],params['mu0'],params['sigma0'],params['sigma1F'])
-    res = simulation.simulateAll(datagen,[m],22*12,260,22,n_iter)
-    return res
+    res = simulation.simulateAll(datagen,[m,m2,m3],22*12,260,22,n_iter)
+    
+    plotUtil.plot_wts_timeseries(res,['HRP','IVP','EFO'])
