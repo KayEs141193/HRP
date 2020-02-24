@@ -1,6 +1,6 @@
 import simulation
 from data import LopezGenerator, GaussianGenerator, DynamicGenerator
-from model import gHRP, gIVP, gEFO
+from model import gHRP, gIVP, gCLA
 from util import plotUtil
 import numpy as np
 
@@ -33,7 +33,7 @@ def generate_basic_scenarios(n,t,corrp):
     '''
     pass
     
-def generate_downturn_scenarios():
+def run_downturn_scenarios():
     '''
     Generates basic scenarios with varying linkages.
     Fixed:
@@ -47,20 +47,23 @@ def generate_downturn_scenarios():
         t3: final period of normal return
     '''
     n = 10
-    n_iter = 1
+    n_iter = 100
+    
+    linkage = 'single'
     
     sigma = np.ones(n)*0.01
     mean  = np.zeros(n)
     
     g1 = GaussianGenerator(sigma,mean,'Diagnol',n)
-    g2 = GaussianGenerator(sigma*10,mean,'Correlated',n,(0.9,1))
-    m = gHRP()
+    g2 = GaussianGenerator(sigma*2,mean,'Correlated',n,(0.9,1))
+    m = gHRP(linkage_type=linkage)
     m2 = gIVP()
-    m3 = gEFO()
+    m3 = gCLA()
     datagen = DynamicGenerator(np.array([282,132,146]),[g1,g2,g1],n)
     res = simulation.simulateAll(datagen,[m,m2,m3],22*14,260,22,n_iter)
     
-    plotUtil.plot_wts_timeseries(res,['HRP','IVP','EFO'])
+    plotUtil.plot_wts_timeseries(res,['HRP','IVP','CLA'])
+    plotUtil.gen_summary_statistics(res,['HRP','IVP','CLA'])
     
 def run_lopez_replication():
     params = {  'nObs': 520,
@@ -71,12 +74,14 @@ def run_lopez_replication():
                 'sigma0':.01,
                 'sigma1F':0.25}
     
-    n_iter = 1
+    n_iter = 100
+    linkage = 'complete'
     
-    m = gHRP()
+    m = gHRP(linkage_type=linkage)
     m2 = gIVP()
-    m3 = gEFO()
+    m3 = gCLA()
     datagen = LopezGenerator(params['sLength'],params['size0'],params['size1'],params['mu0'],params['sigma0'],params['sigma1F'])
     res = simulation.simulateAll(datagen,[m,m2,m3],22*12,260,22,n_iter)
     
-    plotUtil.plot_wts_timeseries(res,['HRP','IVP','EFO'])
+    plotUtil.plot_wts_timeseries(res,['HRP','IVP','CLA'])
+    plotUtil.gen_summary_statistics(res,['HRP','IVP','CLA'])

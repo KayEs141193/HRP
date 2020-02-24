@@ -1,12 +1,19 @@
 import pandas as pd
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 
 def data_gen():
     np.random.randn(5,10)
 
-def simulateOnce(dataGen,models,tPeriod,window,rparam):
+def simulateOnce(dataGen,models,tPeriod,window,rparam,plotSeries=False):
 
     assetData = dataGen.generate(tPeriod+window)
+
+    if plotSeries:    
+        plt.figure(figsize=(16,10))
+        #pd.DataFrame(assetData.T).plot.line()
+        plt.plot(assetData.T)
     
     nassets = assetData.shape[0]
     nrebalances = int(tPeriod/rparam)
