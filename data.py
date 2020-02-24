@@ -4,7 +4,7 @@
 import numpy as np
 import pandas as pd
 import random
-from scipy.stats import norm, t
+from scipy.stats import norm, t, skewnorm
 
 class LopezGenerator():
         
@@ -216,6 +216,22 @@ class TGenerator(GaussianGenerator):
         uni = norm.cdf(super(TGenerator,self).generate(n))
         
         return (t.ppf(uni,self.df.reshape(-1,1)) + self.mean.reshape(-1,1))*np.sqrt(self.var.reshape(-1,1))
+
+class SkewedNormGenerator(GaussianGenerator):
+    '''
+    Generates random variables with gaussian copula and standard_t marginals
+    '''
+    
+    def __init__(self,a,var,mean,corr,*args,**kwargs):
+        super(SkewedNormGenerator,self).__init__(var,mean,corr,*args,**kwargs)
+        
+        self.a = a
+        
+    def generate(self,n=100):
+        
+        uni = norm.cdf(super(SkewedNormGenerator,self).generate(n))
+        
+        return (skewnorm.ppf(uni,self.a.reshape(-1,1)) + self.mean.reshape(-1,1))*np.sqrt(self.var.reshape(-1,1))
 
 class DynamicGenerator:
     '''
