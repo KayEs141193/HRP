@@ -135,15 +135,18 @@ def run_lopez_replication(n_iter,linkage):
                 'mu0':0,
                 'sigma0':.01,
                 'sigma1F':0.25}
-        
-    m = gHRP(linkage_type=linkage)
+
+    l_m = []
+    for l in linkage:
+        l_m.append(gHRP(linkage_type=l))
     m2 = gIVP()
     m3 = gCLA()
     
     datagen = LopezGenerator(params['sLength'],params['size0'],params['size1'],params['mu0'],params['sigma0'],params['sigma1F'])
-    res = simulation.simulateAll(datagen,[m,m2,m3],22*12,260,22,n_iter)
+    res = simulation.simulateAll(datagen,l_m+[m2,m3],22*12,260,22,n_iter)
     
-    names = [ name+'__iter_'+str(n_iter)+'__linkage_'+linkage for name in ['HRP','IVP','CLA']]
+    names = ['HRP' + '__iter_'+str(n_iter)+'__linkage_'+l for l in linkage] +\
+    [ name+'__iter_'+str(n_iter) for name in ['IVP','CLA']]
     
     plotUtil.plot_wts_timeseries(res,names,save_output=True)
     plotUtil.gen_summary_statistics(res,names,save_output=True)

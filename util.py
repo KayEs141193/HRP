@@ -28,7 +28,7 @@ class metrics():
         
         ret_data = 1 + data
         
-        tot_ret = np.prod(ret_data,axis = 0) - 1
+        tot_ret = np.prod(ret_data) - 1
         
         tot_log_ret = np.sum(data,axis = 0)
         
@@ -169,13 +169,13 @@ class plotUtil():
         
         assert len(res) > 0 , "Run experiment first!!"
         
-        wts, dailyrets = res[0]
+        wts, dailyrets,monthlyrets = res[0]
         
         wts_sum = np.zeros(wts.shape)
         dailyrets_sum = np.zeros(dailyrets.shape)
         
         for i in range(len(res)):
-            wts, dailyrets = res[i]
+            wts, dailyrets,monthlyrets = res[i]
             wts_sum += wts
             dailyrets_sum += dailyrets
             
@@ -226,7 +226,7 @@ class plotUtil():
         
         assert len(res) > 0 , "Run experiment first!!"
             
-        wts, dailyrets = res[0]
+        wts, dailyrets, monthlyrets = res[0]
             
         M,N,T = wts.shape
         n_sims = len(res)
@@ -238,56 +238,80 @@ class plotUtil():
             iter_turnover = []
             iter_sspw = []
             iter_tot_ret = []
-            iter_tot_log_ret = []
+            #iter_tot_log_ret = []
             iter_avg_daily_ret = []
-            iter_avg_daily_log_ret = []
+            #iter_avg_daily_log_ret = []
+            iter_mo_tot_ret = []
+            #iter_tot_log_ret = []
+            iter_avg_mo_ret = []
+            #iter_avg_daily_log_ret = []
+            
+            
             
             
             for i in range(n_sims):
                 
-                wts, dailyrets = res[i]
+                wts, dailyrets,monthlyrets = res[i]
                 iter_turnover.append(metrics().avg_turnover(wts[m,:,:].T))
                 iter_sspw.append(metrics().sum_sq_port_wts(wts[m,:,:].T))
                 
                 tot_ret, tot_log_ret, avg_daily_ret, avg_log_ret = metrics().calc_rets(dailyrets[m].T)
                 
+                tot_mo_ret, tot_mo_log_ret, avg_mo_ret, avg_mo_log_ret = metrics().calc_rets(monthlyrets[m].T)
+                
+                
                 iter_tot_ret.append(tot_ret)
-                iter_tot_log_ret.append(tot_log_ret)
+                #iter_tot_log_ret.append(tot_log_ret)
                 iter_avg_daily_ret.append(avg_daily_ret)
-                iter_avg_daily_log_ret.append(avg_log_ret)
+                #iter_avg_daily_log_ret.append(avg_log_ret)
+                
+                iter_mo_tot_ret.append(tot_mo_ret)
+                iter_avg_mo_ret.append(avg_mo_ret)
+
+                
+                
                 
             
             stats_means[names[m]] += [np.mean(iter_turnover),
                  np.mean(iter_sspw),
                  np.mean(iter_tot_ret), 
-                 np.mean(iter_tot_log_ret),
+                 #np.mean(iter_tot_log_ret),
                  np.mean(iter_avg_daily_ret),
-                 np.mean(iter_avg_daily_log_ret)
+                 #np.mean(iter_avg_daily_log_ret)
+                 np.mean(iter_mo_tot_ret), 
+                 np.mean(iter_avg_mo_ret)
+                 
                  ]
             
             stats_se[names[m]] += [np.std(iter_turnover)/n_sims**0.5,
                  np.std(iter_sspw)/n_sims**0.5,
                  
                  np.var(iter_tot_ret,ddof=1),
-                 np.var(iter_tot_log_ret,ddof=1),
+                 #np.var(iter_tot_log_ret,ddof=1),
                  np.var(iter_avg_daily_ret,ddof=1),
-                 np.var(iter_avg_daily_log_ret,ddof=1)
+                 #np.var(iter_avg_daily_log_ret,ddof=1)
+
+                 np.var(iter_mo_tot_ret,ddof=1),
+                 np.var(iter_avg_mo_ret,ddof=1)
+                 
                  ]
             
             
             
         col_names_means = ['Avg Turnover', 'Avg SSPW',
                      'Avg Total Return',
-                     'Avg Total Log Return',
                      'Avg Daily Return',
-                     'Avg Daily Log Return'
+                     'Avg Total Mo Return',
+                     'Avg Monthly Return',
+                     
                      ]
         
         col_names_se = ['Avg Turnover (se)','Avg SSPW (se)',
                         'Var Total Return',
-                        'Var Total Log Return',
                         'Var Daily Return',
-                        'Var Daily Log Return'
+                        'Var Total Mo Return',
+                        'Var Monthly Return',
+                        
                      ]
         
         df_means = pd.DataFrame.from_dict(stats_means,orient = 'index',columns = col_names_means)
