@@ -1,5 +1,5 @@
 import simulation
-from data import LopezGenerator, GaussianGenerator, DynamicGenerator, TGenerator, SkewedNormGenerator
+from data import LopezGenerator, GaussianGenerator, DynamicGenerator, TGenerator, SkewedNormGenerator, RealDataGenerator
 from model import gHRP, gIVP, gCLA
 from util import plotUtil
 import numpy as np
@@ -147,4 +147,27 @@ def run_lopez_replication(n_iter,linkage):
     
     plotUtil.plot_wts_timeseries(res,names,save_output=True)
     plotUtil.gen_summary_statistics(res,names,save_output=True)
+
+
+def run_real_world(linkage,datatype='S&P'):
     
+    n = 1 # This parameter doesn't matter
+    n_iter = 1 # Changing this is useless as same data will be returned
+    
+    m = gHRP(linkage_type=linkage)
+    m2 = gIVP()
+    m3 = gCLA()
+    
+    datagen = RealDataGenerator(datatype)
+    
+    if datatype == 'S&P':
+        res = simulation.simulateAll(datagen,[m,m2,m3],4792,260,22,n_iter) # Use for S&P
+        legends = ['Materials	','Industrials'	,'Consumer Disc',	'Consumer Staples', 'Energy',	'Financial',	'Utilities',	'HealthCare',	'Tech']
+    else:
+        res = simulation.simulateAll(datagen,[m,m2,m3],1165,260,22,n_iter)
+        legends = ['Reits',	'Russell3k'	,'SP500'	,'FTSE AW ex US',	'MSCI EM	',	'MBS ETF',	'Intl Bond','EMD Local FI',	'Junk Bonds',	'GOLD']
+        
+    names = [ name+ '__' + datatype +'__linkage_'+linkage for name in ['HRP','IVP','CLA']]
+    
+    plotUtil.plot_wts_timeseries(res,names,asset_legends=legends,save_output=True)
+    plotUtil.gen_summary_statistics(res,names,save_output=True)

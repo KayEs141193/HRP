@@ -152,7 +152,7 @@ class metrics():
 class plotUtil():
     
     @classmethod
-    def plot_wts_timeseries(self,res,names,save_output = False):
+    def plot_wts_timeseries(self,res,names,asset_legends=None,save_output = False):
         
         '''
         Paramters: 
@@ -195,6 +195,10 @@ class plotUtil():
             plt.xlabel('Rebalancing period')
             plt.ylabel('Asset weights')
             plt.ylim(0.0,1.0)
+            if asset_legends is not None:
+                plt.legend(asset_legends)
+            else:
+                plt.legend([str(i) for i in range(len(avg_wts[m]))])
             if save_output:
                 if not os.path.exists('./runner_outputs'):
                     os.makedirs('./runner_outputs')
