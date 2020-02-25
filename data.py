@@ -260,6 +260,17 @@ class DynamicGenerator:
         return res
     
     
+class RealDataGenerator:
     
+    def __init__(self,datatype):
+        
+        if datatype == 'S&P':
+            self.data = pd.read_csv('ass_returns.csv',usecols=np.arange(1,10),skiprows=8,header=None).values.T
+        else:
+            self.data = pd.read_csv('ass_returns.csv',usecols=list(range(11,16))+list(range(17,2)),skiprows=3635,header=None).values.T
+    
+    def generate(self,n=100):
+        
+        return self.data
     
     
