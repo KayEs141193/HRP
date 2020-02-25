@@ -3,6 +3,7 @@ from data import LopezGenerator, GaussianGenerator, DynamicGenerator, TGenerator
 from model import gHRP, gIVP, gCLA
 from util import plotUtil
 import numpy as np
+import pandas as pd
 
 '''
     Adding different scenarios to run
@@ -53,14 +54,16 @@ def run_downturn_scenarios(n_iter,sigma,factor,linkage,n,rholim):
     g1 = GaussianGenerator(sigma,mean,'Diagnol',n)
     g2 = GaussianGenerator(sigma*factor,mean,'Correlated',n,rholim)
     
-    m = gHRP(linkage_type=linkage)
+    m = [ gHRP(linkage_type=link) for link in ['single','complete','average','centroid','median','ward'] ]
+    
     m2 = gIVP()
     m3 = gCLA()
     
-    datagen = DynamicGenerator(np.array([282,132,146]),[g1,g2,g1],n)
-    res = simulation.simulateAll(datagen,[m,m2,m3],22*14,260,22,n_iter)
+    getMeta = [1,4,10,19,25,40]
+    names = [ name+'_downturn__iter_'+str(n_iter)+'__linkage_'+linkage for name in [*[ 'HRP_'+name+'_' for name in  ['single','complete','average','centroid','median','ward']],'IVP','CLA']]
     
-    names = [ name+'__iter_'+str(n_iter)+'__linkage_'+linkage for name in ['HRP','IVP','CLA']]
+    datagen = DynamicGenerator(np.array([282,132,150]),[g1,g2,g1],n)
+    res = simulation.simulateAll(datagen,m+[m2,m3],22*50,260,22,n_iter,getMeta,names)    
     
     plotUtil.plot_wts_timeseries(res,names,save_output=True)
     plotUtil.gen_summary_statistics(res,names,save_output=True)
@@ -91,7 +94,7 @@ def run_skewedNorm_scenarios(n_iter,sigma,linkage,n,a):
     
     res = simulation.simulateAll(datagen,[m,m2,m3],22*14,260,22,n_iter)
     
-    names = [ name+'__iter_'+str(n_iter)+'__linkage_'+linkage for name in ['HRP','IVP','CLA']]
+    names = [ name+'_skewedNorm__iter_'+str(n_iter)+'__linkage_'+linkage for name in ['HRP','IVP','CLA']]
     
     plotUtil.plot_wts_timeseries(res,names,save_output=True)
     plotUtil.gen_summary_statistics(res,names,save_output=True)
@@ -121,7 +124,7 @@ def run_T_scenarios(n_iter,sigma,linkage,n,df):
     
     res = simulation.simulateAll(datagen,[m,m2,m3],22*14,260,22,n_iter)
     
-    names = [ name+'__iter_'+str(n_iter)+'__linkage_'+linkage for name in ['HRP','IVP','CLA']]
+    names = [ name+'_T__iter_'+str(n_iter)+'__linkage_'+linkage for name in ['HRP','IVP','CLA']]
     
     plotUtil.plot_wts_timeseries(res,names,save_output=True)
     plotUtil.gen_summary_statistics(res,names,save_output=True)
@@ -135,18 +138,15 @@ def run_lopez_replication(n_iter,linkage):
                 'mu0':0,
                 'sigma0':.01,
                 'sigma1F':0.25}
-
-    l_m = []
-    for l in linkage:
-        l_m.append(gHRP(linkage_type=l))
+        
+    m = gHRP(linkage_type=linkage)
     m2 = gIVP()
     m3 = gCLA()
     
     datagen = LopezGenerator(params['sLength'],params['size0'],params['size1'],params['mu0'],params['sigma0'],params['sigma1F'])
-    res = simulation.simulateAll(datagen,l_m+[m2,m3],22*12,260,22,n_iter)
+    res = simulation.simulateAll(datagen,[m,m2,m3],22*12,260,22,n_iter)
     
-    names = ['HRP' + '__iter_'+str(n_iter)+'__linkage_'+l for l in linkage] +\
-    [ name+'__iter_'+str(n_iter) for name in ['IVP','CLA']]
+    names = [ name+'__iter_'+str(n_iter)+'__linkage_'+linkage for name in ['HRP','IVP','CLA']]
     
     plotUtil.plot_wts_timeseries(res,names,save_output=True)
     plotUtil.gen_summary_statistics(res,names,save_output=True)
@@ -174,3 +174,11 @@ def run_real_world(linkage,datatype='S&P'):
     
     plotUtil.plot_wts_timeseries(res,names,asset_legends=legends,save_output=True)
     plotUtil.gen_summary_statistics(res,names,save_output=True)
+    
+    for i,name in enumerate(names):
+        pd.DataFrame(res[0][0][i,:,:]).to_csv('./runner_outputs/weights_'+name+'_'+datatype+'_'+linkage+'.csv')
+        pd.Series(res[0][1][i,:]).to_csv('./runner_outputs/ptfDailyRets_'+name+'_'+datatype+'_'+linkage+'.csv')
+
+
+#for link in ['single','complete','average','centroid','median','ward']:
+run_downturn_scenarios(1,0.01,5,'single',10,(0.8,1.0))

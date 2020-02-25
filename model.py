@@ -140,14 +140,20 @@ class gHRP:
         '''
         
         link = self._tcluster(data)
-        
+        self.linkData = link
         # Covariance calculated here is different from self.correlate. POTENTIAL INCONSISTENCY
         cov = self.corr.cov(data)
-        
+        self.covData = cov
         sortIx = self._getQuasiDiag(link)
         w = self._getRecBipart(cov,sortIx)
         
         return w
+    
+    def getMeta(self,):
+        return self.linkData, self.covData
+    
+    def hasMeta(self,):
+        return True
 
 class gIVP:
     
@@ -172,6 +178,9 @@ class gIVP:
 
         
         return pd.Series(_ivp)
+    
+    def hasMeta(self,):
+        return False
     
     
 class gCLA:
@@ -200,7 +209,9 @@ class gCLA:
         w = cl.min_volatility()
 
         return pd.Series(w)
-            
+    
+    def hasMeta(self,):
+        return False
  
         
 if __name__ == '__main__':

@@ -1,12 +1,12 @@
-import pandas as pd
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.cluster import hierarchy
 
 def data_gen():
     np.random.randn(5,10)
 
-def simulateOnce(dataGen,models,tPeriod,window,rparam,plotSeries=False):
+def simulateOnce(dataGen,models,tPeriod,window,rparam,plotSeries=False,getMeta=None,names=None):
 
     assetData = dataGen.generate(tPeriod+window)
 
@@ -29,7 +29,19 @@ def simulateOnce(dataGen,models,tPeriod,window,rparam,plotSeries=False):
     for i, mm in enumerate(models):
         
         weights[i,:,0] = mm.allocate(assetData[:,:window])
-        weights[i,:,1:] = np.array([ mm.allocate(assetData[:,(window+rparam*(j+1)-window):(window+rparam*(j+1))]) for j in range(nrebalances) ]).T
+        
+        if getMeta is None or mm.hasMeta() is False:
+            weights[i,:,1:] = np.array([ mm.allocate(assetData[:,(window+rparam*(j+1)-window):(window+rparam*(j+1))]) for j in range(nrebalances) ]).T
+        else:
+            for j in range(nrebalances):
+                weights[i,:,j+1] = mm.allocate(assetData[:,(window+rparam*(j+1)-window):(window+rparam*(j+1))])
+                if j in getMeta:
+                    link, cov = mm.getMeta()
+                    plt.figure(figsize=(16,10))
+                    dn = hierarchy.dendrogram(link)
+                    plt.title(names[i]+'_'+str(i)+'__Step_'+str(j))
+                    plt.savefig('./runner_outputs/'+names[i]+'_Dendrogram_Step_'+str(j)+'.png')
+                    pd.DataFrame(cov).to_csv('./runner_outputs/'+names[i]+'_CovarianceMatrix_Step_'+str(j)+'.csv')
         
         ww = np.zeros(shape=assetData[:,window:].shape)
         
@@ -44,12 +56,12 @@ def simulateOnce(dataGen,models,tPeriod,window,rparam,plotSeries=False):
     return weights, dailyrets, monthlyrets
         
 
-def simulateAll(dataGen,models,tPeriod,initPeriod,rparam,iterations=10):
+def simulateAll(dataGen,models,tPeriod,initPeriod,rparam,iterations=10,getMeta=None,names=None):
     
     data = []
     
     for _ in range(iterations):
-        data.append( simulateOnce(dataGen,models,tPeriod,initPeriod,rparam) )
+        data.append( simulateOnce(dataGen,models,tPeriod,initPeriod,rparam,getMeta=getMeta,names=names) )
     
     return data
     
