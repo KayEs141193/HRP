@@ -20,10 +20,11 @@ def simulateOnce(dataGen,models,tPeriod,window,rparam,plotSeries=False):
     
     weights = np.zeros(shape=(len(models),nassets,nrebalances+1))
     dailyrets = np.zeros(shape=(len(models),tPeriod))
-    monthlyrets = np.zeros(shape=(nassets,nrebalances+1))
+    monthlAssetyRets = np.zeros(shape=(nassets,nrebalances))
+    monthlyrets = np.zeros(shape=(nassets,nrebalances))
     
     for j in range(nrebalances):
-        monthlyrets[:,j] = (1+assetData[:,(window+rparam*j):(window+rparam*(j+1))]).prod(axis=1)
+        monthlAssetyRets[:,j] = (1+assetData[:,(window+rparam*j):(window+rparam*(j+1))]).prod(axis=1)
     
     for i, mm in enumerate(models):
         
@@ -37,7 +38,7 @@ def simulateOnce(dataGen,models,tPeriod,window,rparam,plotSeries=False):
             
         
         dailyrets[i,:] = (ww*assetData[:,window:]).sum(axis=0)
-        monthlyrets[i,:] = (weights[i,:,:] * monthlyrets).sum(axis=0)
+        monthlyrets[i,:] = (weights[i,:,:-1] * monthlAssetyRets).sum(axis=0)
     
     monthlyrets = monthlyrets - 1
     return weights, dailyrets, monthlyrets
