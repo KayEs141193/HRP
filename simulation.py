@@ -38,7 +38,8 @@ def simulateOnce(dataGen,models,tPeriod,window,rparam,plotSeries=False):
         
         dailyrets[i,:] = (ww*assetData[:,window:]).sum(axis=0)
         monthlyrets[i,:] = (weights[i,:,:] * monthlyrets).sum(axis=0)
-        
+    
+    monthlyrets = monthlyrets - 1
     return weights, dailyrets, monthlyrets
         
 
